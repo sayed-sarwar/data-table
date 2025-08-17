@@ -33,6 +33,7 @@ export function DataTable({ data, onAddRow, onUpdateRow, onDeleteRow }: DataTabl
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingPerson, setEditingPerson] = useState<Person | null>(null)
+  const [rowsToAdd, setRowsToAdd] = useState(1)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -56,8 +57,18 @@ export function DataTable({ data, onAddRow, onUpdateRow, onDeleteRow }: DataTabl
       return
     }
     
-    onAddRow(formData)
+    // Add multiple rows based on the quantity specified
+    for (let i = 0; i < rowsToAdd; i++) {
+      const newPersonData = {
+        ...formData,
+        name: rowsToAdd > 1 ? `${formData.name} ${i + 1}` : formData.name,
+        email: rowsToAdd > 1 ? formData.email.replace('@', `${i + 1}@`) : formData.email
+      }
+      onAddRow(newPersonData)
+    }
+    
     resetForm()
+    setRowsToAdd(1)
     setIsAddDialogOpen(false)
   }
 
@@ -103,20 +114,39 @@ export function DataTable({ data, onAddRow, onUpdateRow, onDeleteRow }: DataTabl
           </p>
         </div>
         
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add New Row
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Add New Team Member</DialogTitle>
-              <DialogDescription>
-                Add a new person to your team. Click save when you're done.
-              </DialogDescription>
-            </DialogHeader>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="rows-quantity" className="text-sm font-medium">
+              Rows:
+            </Label>
+            <Input
+              id="rows-quantity"
+              type="number"
+              min="1"
+              max="50"
+              value={rowsToAdd}
+              onChange={(e) => setRowsToAdd(Math.max(1, Math.min(50, parseInt(e.target.value) || 1)))}
+              className="w-16 h-9"
+            />
+          </div>
+          
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={resetForm}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add New Row{rowsToAdd > 1 ? 's' : ''}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Add New Team Member{rowsToAdd > 1 ? 's' : ''}</DialogTitle>
+                <DialogDescription>
+                  {rowsToAdd > 1 
+                    ? `Add ${rowsToAdd} new people to your team. For multiple rows, names and emails will be automatically numbered.`
+                    : 'Add a new person to your team. Click save when you\'re done.'
+                  }
+                </DialogDescription>
+              </DialogHeader>
             <form onSubmit={handleAddSubmit}>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -171,12 +201,15 @@ export function DataTable({ data, onAddRow, onUpdateRow, onDeleteRow }: DataTabl
                   </select>
                 </div>
               </div>
-              <DialogFooter>
-                <Button type="submit">Add Person</Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+                                              <DialogFooter>
+                  <Button type="submit">
+                    Add {rowsToAdd} Person{rowsToAdd > 1 ? 's' : ''}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="rounded-md border">
